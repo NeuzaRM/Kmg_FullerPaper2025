@@ -1,0 +1,71 @@
+---
+title: "Run12a_MakeFiles_ForBedtools"
+author: "Neuza Reis Matias"
+date: "04/23/2024"
+output:
+  pdf_document: default
+  html_document:
+    fig_height: 10
+    fig_width: 10
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Prepare files to run:
+Run12b_bedtools_intersect_CAGE_3Pseq.sh
+
+
+```{r}
+
+#load libraries
+
+library(tidyr)
+library(dplyr)
+library(stringr)
+
+```
+
+
+
+#Make a file with transcription start sites (TSS) coordinates: TAMA_merge_BamGal4_KmgKD_TSS.bed
+
+
+```{r}
+
+coord_mergedIsof <- read.table("C:\\Users\\neuza\\Documents\\Posdoc_Fuller\\LongReads_RNAseq\\PacBio\\analysis_scripts\\KmgProject_20240409\\Merge_KmgKD\\SQANTI3_filtered\\tappAS\\tappAS_outputs\\Promoter_quantif\\Results_analysis\\Drosophila_melanogaster.BDGP6.32.109_transcriptCoordinates.bed", sep = "\t", header = TRUE, stringsAsFactors = FALSE)
+
+head(coord_mergedIsof)
+
+
+```
+
+
+```{r}
+
+TSS_fwd <- coord_mergedIsof %>% filter(Strand == "+") %>% mutate(end_fwd = Start + 1) 
+TSS_fwd <- TSS_fwd [c(1,2,7,4:6)]
+head(TSS_fwd)
+
+TSS_rv <- coord_mergedIsof %>% filter(Strand == "-") %>% mutate(start_rv = End - 1) 
+TSS_rv <- TSS_rv [c(1,7,3:6)]
+head(TSS_rv)
+
+colnames(TSS_fwd) <-  c('chr', 'Start', 'End', 'x', 'y', 'Strand')
+colnames(TSS_rv) <-  c('chr', 'Start', 'End', 'x', 'y', 'Strand')
+
+TSS_all <- bind_rows(TSS_fwd,TSS_rv)
+head(TSS_all)
+
+
+write.table(TSS_all, "C:\\Users\\neuza\\Documents\\Posdoc_Fuller\\LongReads_RNAseq\\PacBio\\analysis_scripts\\KmgProject_20240409\\Merge_KmgKD\\SQANTI3_filtered\\tappAS\\tappAS_outputs\\Promoter_quantif\\Results_analysis\\Drosophila_melanogaster.BDGP6.32.109_TSScoordinates.bed", sep="\t", row.names = FALSE, col.names = FALSE, quote=FALSE)
+
+```
+
+
+
+
+
+
