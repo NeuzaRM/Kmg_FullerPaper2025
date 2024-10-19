@@ -1,0 +1,323 @@
+---
+title: "Run12c_filter_SQANTI3"
+author: "Neuza Reis Matias"
+date: "04/23/2024"
+output:
+  pdf_document: default
+  html_document:
+    fig_height: 10
+    fig_width: 10
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+Keep transcripts that:
+• overlap with CAGE clusters
+• overlap with 3'seq clusters
+• have all junctions with Short-Reads coverage
+• do not have RT switching artifact
+
+
+Analyze results and make a list of transcripts that pass all the above filters.
+ 
+input: *_classification.txt (output of Run11_SQANTI3.sh)
+*_junctions.txt (output of Run11_SQANTI3.sh)
+
+
+https://github.com/ConesaLab/SQANTI3/wiki/SQANTI3-output-explanation
+
+
+
+outputs:
+Run12c_filter_SQANTI3.pdf
+filtered_transcripts.txt
+
+
+
+```{r}
+
+#load libraries
+
+library(tidyr)
+library(dplyr)
+library(stringr)
+
+
+```
+
+
+# Get *_classification.txt table from SQANTI3 output:
+
+```{r}
+
+table <- read.table("C:\\Users\\neuza\\Documents\\Posdoc_Fuller\\LongReads_RNAseq\\PacBio\\analysis_scripts\\KmgProject_20240409\\Merge_KmgKD\\TAMA_merge_BamGal4_KmgKD_classification.txt", quote = "", sep = "\t", header = TRUE, stringsAsFactors = FALSE)
+
+
+table <- table %>% filter(chrom == "2L" | chrom == "2R" | chrom == "3L" | chrom == "3R" | chrom == "X" | chrom == "Y")
+
+
+table <- select(table, isoform, exons, associated_gene, RTS_stage)
+
+
+head(table)
+
+```
+
+
+
+
+
+# Transcripts that start within CAGE clusters
+
+
+```{r}
+
+TSS_CAGE <- read.table("C:\\Users\\neuza\\Documents\\Posdoc_Fuller\\LongReads_RNAseq\\PacBio\\analysis_scripts\\KmgProject_20240409\\Merge_KmgKD\\TAMA_merge_BamGal4_KmgKD_TSS_CAGE.bed", sep = "\t", header = FALSE, stringsAsFactors = FALSE)
+
+TSS_CAGE <- TSS_CAGE %>% mutate(within_CAGE = "Yes")
+
+TSS_CAGE <- TSS_CAGE[c(4,7)]
+colnames(TSS_CAGE) <- c('isoform', 'within_CAGE')
+
+#head(TSS_CAGE)
+nrow(TSS_CAGE)
+
+```
+
+
+
+# Transcripts that end within 3'Seq clusters
+
+
+```{r}
+
+TTS_3Pseq <- read.table("C:\\Users\\neuza\\Documents\\Posdoc_Fuller\\LongReads_RNAseq\\PacBio\\analysis_scripts\\KmgProject_20240409\\Merge_KmgKD\\TAMA_merge_BamGal4_KmgKD_TTS_3Pseq.bed", sep = "\t", header = FALSE, stringsAsFactors = FALSE)
+
+TTS_3Pseq <- TTS_3Pseq %>% mutate(within_3Pseq = "Yes")
+
+TTS_3Pseq <- TTS_3Pseq[c(4,7)]
+colnames(TTS_3Pseq) <- c('isoform', 'within_3Pseq')
+
+#head(TTS_3Pseq)
+nrow(TTS_3Pseq)
+
+```
+
+Join tables
+
+```{r}
+
+
+table <- left_join(table, TSS_CAGE, by = "isoform" )
+table$within_CAGE[is.na(table$within_CAGE)] <- "No"
+
+#
+
+table <- left_join(table, TTS_3Pseq, by = "isoform" )
+table$within_3Pseq[is.na(table$within_3Pseq)] <- "No"
+
+head(table)
+
+```
+
+
+
+# Get **_junctions.tx table from SQANTI3 output:
+
+
+```{r}
+
+
+junctions_full <- read.table("C:\\Users\\neuza\\Documents\\Posdoc_Fuller\\LongReads_RNAseq\\PacBio\\analysis_scripts\\KmgProject_20240409\\Merge_KmgKD\\TAMA_merge_BamGal4_KmgKD_junctions.txt", sep = "\t", header = TRUE, stringsAsFactors = FALSE)
+
+
+#head(junctions_full)
+
+junctions_select <- select(junctions_full, isoform, junction_number, sample_with_cov)
+
+junctions_select[] <- lapply(junctions_select, function(x) paste(x, ",", sep=""))
+junctions_select$isoform <- str_replace(junctions_select$isoform, ",", "")
+
+#head(junctions_select)
+
+junctions <- junctions_select %>% group_by(isoform) %>% dplyr::summarise(across(everything(), str_flatten))
+
+junctions$allJunctions_withSRcov <- "Yes"
+
+# Remove transcripts that have at least one of the junctions with no coverage in any of the samples (sample_with_cov = 0)
+
+junctions[grep("0", junctions$sample_with_cov), "allJunctions_withSRcov"] <- "No"
+
+#head(junctions)
+
+table <- left_join(table, junctions, by = "isoform" )
+
+table$allJunctions_withSRcov[is.na(table$allJunctions_withSRcov)] <- "without_junctions"
+
+
+head(table)
+
+
+```
+
+
+# Isoforms that Start in a CAGE cluster
+
+
+
+```{r}
+
+table$within_CAGE_bedtools = factor(table$within_CAGE,
+                              levels = c("Yes","No"),
+                              ordered=TRUE)
+
+count_allwithin_CAGE <- forcats::fct_count(table$within_CAGE)
+
+colnames(count_allwithin_CAGE) <- c('x', 'y')
+
+count_allwithin_CAGE <- count_allwithin_CAGE %>% mutate(percent = y / sum(y) * 100)
+
+
+colnames(count_allwithin_CAGE) <- c('Isoforms starting within CAGE cluster', 'Isoform-count', 'Isoform-percentage')
+
+
+knitr::kable(count_allwithin_CAGE, "simple")
+
+```
+
+
+
+# Isoforms that End in 3'seq Cluster
+
+
+```{r}
+
+table$within_3Pseq = factor(table$within_3Pseq,
+                              levels = c("Yes","No"),
+                              ordered=TRUE)
+
+count_allwithin_3Pseq <- forcats::fct_count(table$within_3Pseq)
+
+colnames(count_allwithin_3Pseq) <- c('x', 'y')
+
+count_allwithin_3Pseq <- count_allwithin_3Pseq %>% mutate(percent = y / sum(y) * 100)
+
+colnames(count_allwithin_3Pseq) <- c('Isoforms ending within 3PSeq cluster', 'Isoform-count', 'Isoform-percentage')
+
+
+knitr::kable(count_allwithin_3Pseq, "simple")
+
+```
+
+
+# Isoforms with All Junctions with Short-Read coverage
+
+
+```{r}
+
+
+
+table$allJunctions_withSRcov = factor(table$allJunctions_withSRcov,
+                              levels = c("Yes","No","without_junctions"),
+                              ordered=TRUE)
+
+count_allJunctions_withSRcov <- forcats::fct_count(table$allJunctions_withSRcov)
+
+
+colnames(count_allJunctions_withSRcov) <- c('x', 'y')
+
+count_allJunctions_withSRcov <- count_allJunctions_withSRcov %>% mutate(percent = y / sum(y) * 100)
+
+colnames(count_allJunctions_withSRcov) <- c('All Junctions with Short-Read coverage', 'Isoform-count', 'Isoform-percentage')
+
+knitr::kable(count_allJunctions_withSRcov, "simple")
+
+```
+
+
+
+
+# Isoforms with RT switching artifact
+
+RTS_stage: TRUE if one of the junctions could be a RT switching artifact.
+
+```{r}
+
+table$RTS_stage = factor(table$RTS_stage,
+                              levels = c("TRUE","FALSE"),
+                              ordered=TRUE)
+
+count_RTS_stage <- forcats::fct_count(table$RTS_stage)
+
+
+colnames(count_RTS_stage) <- c('x', 'y')
+
+count_RTS_stage <- count_RTS_stage %>% mutate(percent = y / sum(y) * 100)
+
+colnames(count_RTS_stage) <- c('At least 1 junction with RT switching artifact', 'Isoform-count', 'Isoform-percentage')
+
+knitr::kable(count_RTS_stage, "simple")
+
+```
+
+
+
+
+## FILTER transcript isoforms
+
+Isoforms that start within a CAGE cluster and end within a 3'Seq cluster
+
+```{r}
+
+table_filtered <- table %>% filter(within_CAGE == "Yes" & within_3Pseq =="Yes") 
+
+nrow(table_filtered)
+
+```
+
+
+And have all junctions with short-reads coverage
+
+```{r}
+
+
+table_filtered <- table_filtered %>% filter(allJunctions_withSRcov != "No") 
+
+# keep the isoforms with NA -> no introns!
+
+nrow(table_filtered)
+
+```
+
+And do not have RT switching artifacts
+
+
+```{r}
+
+
+table_filtered <- table_filtered %>% filter(RTS_stage == "FALSE") 
+
+
+nrow(table_filtered)
+
+```
+
+
+
+Write table with filtered isoforms - input for Run12d_filterGTF.sh:
+
+
+```{r}
+
+filtered_transcripts <- table_filtered$isoform
+
+write.table(filtered_transcripts, "C:\\Users\\neuza\\Documents\\Posdoc_Fuller\\LongReads_RNAseq\\PacBio\\analysis_scripts\\KmgProject_20240409\\Merge_KmgKD\\filtered_transcripts.txt", sep="\t", row.names = FALSE, col.names = FALSE, quote=FALSE)
+
+```
+
+
+

@@ -1,0 +1,154 @@
+---
+title: "Run12a_MakeFiles_ForBedtools"
+author: "Neuza Reis Matias"
+date: "04/23/2024"
+output:
+  pdf_document: default
+  html_document:
+    fig_height: 10
+    fig_width: 10
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Prepare files to run:
+Run12b_bedtools_intersect_CAGE_3Pseq.sh
+
+
+```{r}
+
+#load libraries
+
+library(tidyr)
+library(dplyr)
+library(stringr)
+
+```
+
+
+## Make consensus Cluster .bed files
+NOTE: consensusCluster coordinates have 'chr' on chromosome names. Need to remove that first.
+
+
+#Make CAGE file: consensusCluster_CAGE.bed
+
+
+```{r}
+
+consensusCluster_CAGE <- read.table("C:\\Users\\neuza\\Documents\\Posdoc_Fuller\\LongReads_RNAseq\\PacBio\\analysis_scripts\\KmgProject_20240409\\CAGE\\Results\\consensusCluster_sorted.bed", sep = "\t", header = FALSE, stringsAsFactors = FALSE)
+
+colnames(consensusCluster_CAGE) <- c('chr', 'Start', 'End', 'x', 'y', 'Strand')
+
+consensusCluster_CAGE$chr <- str_replace(consensusCluster_CAGE$chr, "chr", "")
+
+head(consensusCluster_CAGE)
+
+
+write.table(consensusCluster_CAGE, "C:\\Users\\neuza\\Documents\\Posdoc_Fuller\\LongReads_RNAseq\\PacBio\\analysis_scripts\\KmgProject_20240409\\CAGE\\Results\\consensusCluster_CAGE.bed", sep="\t", row.names = FALSE, col.names = FALSE, quote=FALSE)
+
+
+```
+
+
+#Make 3'seq file: consensusCluster_3Pseq.bed
+
+
+```{r}
+
+consensusCluster_3Pseq <- read.table("C:\\Users\\neuza\\Documents\\Posdoc_Fuller\\LongReads_RNAseq\\PacBio\\analysis_scripts\\KmgProject_20240409\\3Pseq\\Results\\consensusCluster_sorted.bed", sep = "\t", header = FALSE, stringsAsFactors = FALSE)
+
+colnames(consensusCluster_3Pseq) <- c('chr', 'Start', 'End', 'x', 'y', 'Strand')
+
+consensusCluster_3Pseq$chr <- str_replace(consensusCluster_3Pseq$chr, "chr", "")
+
+head(consensusCluster_3Pseq)
+
+write.table(consensusCluster_3Pseq, "C:\\Users\\neuza\\Documents\\Posdoc_Fuller\\LongReads_RNAseq\\PacBio\\analysis_scripts\\KmgProject_20240409\\3Pseq\\Results\\consensusCluster_3Pseq.bed", sep="\t", row.names = FALSE, col.names = FALSE, quote=FALSE)
+
+```
+
+
+
+##Make transcripts .bed files
+
+
+Make a table with coordinates of each isoform to use in bedtools intersect:
+
+Use transcript coordinates output from Run09_TAMA_merge: TAMA_merge_BamGal4_KmgKD.bed
+
+
+
+```{r}
+
+coord_mergedIsof_full <- read.table("C:\\Users\\neuza\\Documents\\Posdoc_Fuller\\LongReads_RNAseq\\PacBio\\analysis_scripts\\KmgProject_20240409\\Merge_KmgKD\\TAMA_merge_BamGal4_KmgKD.bed", sep = "\t", header = FALSE, stringsAsFactors = FALSE)
+
+coord_mergedIsof <- coord_mergedIsof_full [c(1:6)]
+
+colnames(coord_mergedIsof) <- c('chr', 'Start', 'End', 'x', 'y', 'Strand')
+
+coord_mergedIsof <- coord_mergedIsof %>% separate(x, sep=";", into= c("gene","isoform"))
+
+coord_mergedIsof <- coord_mergedIsof [c(1:3,5:7)]
+
+head(coord_mergedIsof)
+
+
+```
+
+
+#Make a file with transcription start sites (TSS) coordinates: TAMA_merge_BamGal4_KmgKD_TSS.bed
+
+```{r}
+
+TSS_fwd <- coord_mergedIsof %>% filter(Strand == "+") %>% mutate(end_fwd = Start + 1) 
+TSS_fwd <- TSS_fwd [c(1,2,7,4:6)]
+head(TSS_fwd)
+
+TSS_rv <- coord_mergedIsof %>% filter(Strand == "-") %>% mutate(start_rv = End - 1) 
+TSS_rv <- TSS_rv [c(1,7,3:6)]
+head(TSS_rv)
+
+colnames(TSS_fwd) <-  c('chr', 'Start', 'End', 'x', 'y', 'Strand')
+colnames(TSS_rv) <-  c('chr', 'Start', 'End', 'x', 'y', 'Strand')
+
+TSS_all <- bind_rows(TSS_fwd,TSS_rv)
+head(TSS_all)
+
+
+write.table(TSS_all, "C:\\Users\\neuza\\Documents\\Posdoc_Fuller\\LongReads_RNAseq\\PacBio\\analysis_scripts\\KmgProject_20240409\\Merge_KmgKD\\TAMA_merge_BamGal4_KmgKD_TSS.bed", sep="\t", row.names = FALSE, col.names = FALSE, quote=FALSE)
+
+```
+
+
+
+
+
+#Make a file with transcription termination sites (TTS) coordinates: TAMA_merge_BamGal4_KmgKD_TTS.bed
+
+```{r}
+
+TTS_fwd <- coord_mergedIsof %>% filter(Strand == "+") %>% mutate(start_fwd = End - 1) 
+TTS_fwd <- TTS_fwd [c(1,7,3:6)]
+head(TTS_fwd)
+
+TTS_rv <- coord_mergedIsof %>% filter(Strand == "-") %>% mutate(end_rv = Start + 1) 
+TTS_rv <- TTS_rv [c(1,2,7,4:6)]
+head(TTS_rv)
+
+colnames(TTS_fwd) <-  c('chr', 'Start', 'End', 'x', 'y', 'Strand')
+colnames(TTS_rv) <-  c('chr', 'Start', 'End', 'x', 'y', 'Strand')
+
+TTS_all <- bind_rows(TTS_fwd,TTS_rv)
+head(TTS_all)
+
+
+write.table(TTS_all, "C:\\Users\\neuza\\Documents\\Posdoc_Fuller\\LongReads_RNAseq\\PacBio\\analysis_scripts\\KmgProject_20240409\\Merge_KmgKD\\TAMA_merge_BamGal4_KmgKD_TTS.bed", sep="\t", row.names = FALSE, col.names = FALSE, quote=FALSE)
+
+```
+
+
+
+
