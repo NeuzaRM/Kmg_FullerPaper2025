@@ -1,7 +1,7 @@
 ## RNAseq
 
 
-Libraries were made with protocol:
+Libraries were made with protocol:  
 NEBNext® Ultra II Directional RNA Library Prep Kit for Illumina
 
 Sequencing was performed by Novogene. NovaSeq, Illumina Sequencing PE150.
@@ -17,12 +17,13 @@ Sequencing was performed by Novogene. NovaSeq, Illumina Sequencing PE150.
 
 #### 3. map to genome
 `sbatch Run03Map_pass1.sh`
+
 `sbatch Run04Map_pass2.sh`
 
 #### 4. Index and generate .bw files
 
-Not strand specific
+Not strand specific  
 `sbatch Run05Index_BW.sh`
 
-Strand specific
+Strand specific  
 `sbatch Run06Index_BW_strand.sh`
