@@ -56,8 +56,8 @@ https://github.com/GenomeRIK/tama/wiki/Tama-Collapse
 `sbatch Run06_TAMA_collapse.sh`
 
 -x capped #Our libraries are not 5'capped, but I don't want them to collapse the 5'ends too much. We can then filter based on CAGE  
--a 78 # CAGEseq parallel analysis: 70bp cluster interquantile width that includes 90% of clusters  
--z 80 # 3'seq parallel analysis: 56bp cluster interquantile width that includes 90% of clusters  
+-a 78 # CAGEseq parallel analysis: 78bp cluster interquantile width that includes 90% of clusters  
+-z 80 # 3'seq parallel analysis: 80bp cluster interquantile width that includes 90% of clusters  
 
 
 #### 6. Merge transcriptome annotations
@@ -78,8 +78,8 @@ filelist_BamGal4_KmgKD.txt
 
 `sbatch Run09_TAMA_merge.sh`  
 Same values as in: Run06_TAMA_collapse.sh  
--a 78 # CAGEseq parallel analysis: 70bp cluster interquantile width that includes 90% of clusters  
--z 80 # 3'seq parallel analysis: 56bp cluster interquantile width that includes 90% of clusters  
+-a 78 # CAGEseq parallel analysis: 78bp cluster interquantile width that includes 90% of clusters  
+-z 80 # 3'seq parallel analysis: 80bp cluster interquantile width that includes 90% of clusters  
 
 
 #### 7. Run SQANTI3 - quality control
