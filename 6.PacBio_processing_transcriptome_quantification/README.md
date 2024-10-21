@@ -105,8 +105,8 @@ RNAseq data: 150 PE, sequenced using NOVAseq (with Novogene)
 #### 8. Filter transcripts
 
 Keep transcripts that:  
-• overlap with CAGE clusters  
-• overlap with 3'seq clusters  
+• TSS overlap with CAGE clusters  
+• TTS overlap with 3'seq clusters  
 • have all junctions with Short-Reads coverage  
 • do not have RT switching artifact  
 
