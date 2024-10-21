@@ -1,31 +1,29 @@
 ## CAGE
 
-This pipeline was adapted from: https://github.com/danrlu/Fuller_Lab_paper
-D. Lu, H.S. Sin, C. Lu and M. T. Fuller (GEO: GSE145975)
+This pipeline was adapted from: https://github.com/danrlu/Fuller_Lab_paper  
+D. Lu, H.S. Sin, C. Lu and M. T. Fuller (GEO: GSE145975)  
 
 
-Libraries were made with protocol: https://www.ncbi.nlm.nih.gov/pubmed/24927836
+Libraries were made with protocol: https://www.ncbi.nlm.nih.gov/pubmed/24927836  
 
-Note there is **no PCR amplification step**
+Note there is **no PCR amplification step**  
 
-KmgKD: 76bp SR on Illumina NextSeq 500
-BamGal4 (ctrl): 150bp PE on Illumina NextSeq 500 (Used only R1 for this analysis)
+KmgKD: 76bp SR on Illumina NextSeq 500  
+BamGal4 (ctrl): 150bp PE on Illumina NextSeq 500 (Used only R1 for this analysis)  
 
-#### 1. index the genome.
-CAGEr uses BSgenome.Dmelanogaster.UCSC.dm6, so did the mapping to UCSC genome, which required a different index.
-
+#### 1. index the genome.  
+CAGEr uses BSgenome.Dmelanogaster.UCSC.dm6, so did the mapping to UCSC genome, which required a different index.  
 `sbatch Run00Index.sh`
 
-#### 2. trim off low quality bases
+#### 2. trim off low quality bases  
 `sbatch Run02Trim_SE.sh`
 
-#### 3.map to genome with STAR (76bp is long enough to may include splicing junctions)
+#### 3.map to genome with STAR (76bp is long enough to may include splicing junctions)  
 `sbatch Run03Map_pass2.sh`
 
 
 #### 4. filter and index
-Filter the .bam file to only include uniquely mapped reads and reads on the main chromosomes, then index the filtered .bam file
-
+Filter the .bam file to only include uniquely mapped reads and reads on the main chromosomes, then index the filtered .bam file  
 `sbatch Run04bIndex_Stats_corrected.sh`
 
 <br>
@@ -33,7 +31,7 @@ Filter the .bam file to only include uniquely mapped reads and reads on the main
 #### 5. CAGEr build clusters
 **The version of CAGEr used is 1.20.0 with R/3.4.4**. It has a bug that when reading from .bam files, reads with splicing/indels on - strand all had misidentified 5' position (TSS), likely from the reading bam step according to CAGEr update log. The solution is to use bedtools to count numbers of TSS (5' of reads) at each genomic location, convert to ctss.txt format (see CAGEr manual) as CAGEr input.
 
-CAGEr 1.22.0 wouldn't run through, 1.24.0 generated a lot more TSS clusters on - strand than on + strand. So 1.20.0 was the best option.
+CAGEr 1.22.0 wouldn't run through, 1.24.0 generated a lot more TSS clusters on - strand than on + strand. So 1.20.0 was the best option.  
 
 RUN next scripts inside "trim_SE" folder
 
@@ -61,6 +59,7 @@ This script first convert .bam to .bed (then used in step 7 below), they only ke
 
 #### 6.2 use the consensus TSS clusters built by CAGEr, and the adjusted .adj.srt.bed file from 6.1 to count TSS expression level for each consensus TSS cluster.
 `sbatch Run09a_prepareFile.sh`
+
 `sbatch Run09Bedtools_coverage_array.sh`
 
 <br>
