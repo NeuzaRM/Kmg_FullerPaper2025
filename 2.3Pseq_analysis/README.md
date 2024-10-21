@@ -1,6 +1,6 @@
 ## 3'Seq
 
-Library was made with protocol: QuantSeq 3‘ mRNA-Seq Library Prep Kit - FWD
+Library was made with protocol: QuantSeq 3‘ mRNA-Seq Library Prep Kit - FWD  
 Following sample preparation as in Gallicchio et al. (2024).
 
 Sequencing was performed by the Stanford University Genomics Facility on an Illumina NextSeq 500 platform as in Berry et al. (2022).
@@ -29,8 +29,8 @@ Filter the .bam file to only include uniquely mapped reads and reads on the main
 #### 5. CAGEr build clusters
 
 Because this data was used to filter our PacBio long-reads, we used the same pipeline as of CAGE analysis to generate consensus clusters.
-Instead of TSS (transcription start sites) we worked with TTS (transcription termination sites).
-As for our CAGE analysis, this pipeline was adapted from: https://github.com/danrlu/Fuller_Lab_paper
+Instead of TSS (transcription start sites) we worked with TTS (transcription termination sites).  
+As for our CAGE analysis, this pipeline was adapted from: https://github.com/danrlu/Fuller_Lab_paper  
 D. Lu, H.S. Sin, C. Lu and M. T. Fuller (GEO: GSE145975)
 
 
@@ -62,6 +62,7 @@ This script first convert .bam to .bed (then used in step 7 below), they only ke
 
 #### 6.2 use the consensus TTS clusters built by CAGEr, and the adjusted .adj.srt.bed file from 6.1 to count TTS expression level for each consensus TTS cluster.
 `sbatch Run09a_prepareFile.sh`
+
 `sbatch Run09Bedtools_coverage_array.sh`
 
 <br>
@@ -86,7 +87,6 @@ Combines both strands to be used for plotting CAGE heatmaps in the paper:
 <br>
 
 ===================
-last used on SLURM 8/10/2018-3/5/2019
 
 Trim Galore version: 0.4.4_dev
 
