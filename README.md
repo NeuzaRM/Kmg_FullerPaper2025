@@ -1,4 +1,4 @@
-# Kmg_Paper2024
+# Kmg_FullerPaper2025
 
 ## Scripts for the paper from: 
 
