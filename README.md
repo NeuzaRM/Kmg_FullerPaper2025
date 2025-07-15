@@ -1,8 +1,10 @@
 # Kmg_FullerPaper2025
 
-## Scripts for the paper from: 
+## Scripts for the paper:
+Matias NR, Gallicchio L, Lu D, Kim J, Perez J, Detweiler A, Lu C, Bolival B, Fuller MT. A cell type specific surveillance complex represses cryptic promoters during differentiation in an adult stem cell lineage. (2025) bioRxiv (doi: 10.1101/2025.02.25.640250). Accepted for publication at Genes & Development. 
 
-UCSC public session:
+
+All sequencing data were submitted to GEO with the accession numbers: GSE301549, GSE301552, GSE301635, GSE301637, GSE301639, GSE301641. 
 
 
 
